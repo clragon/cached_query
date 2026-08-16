@@ -859,6 +859,36 @@ void main() async {
 
       expect(numCalls, 2);
     });
+
+    test("refetch counts the caller against a cache only listener", () async {
+      final cache = CachedQuery.asNewInstance();
+      int numCalls = 0;
+      InfiniteQuery<int, int> build({
+        QueryConfig<InfiniteQueryData<int, int>>? config,
+      }) =>
+          InfiniteQuery<int, int>(
+            cache: cache,
+            key: "infinite_query_refetch_unsubscribed",
+            getNextArg: (state) => 1,
+            queryFn: (_) {
+              numCalls++;
+              return Future.value(1);
+            },
+            config: config,
+          );
+
+      final cacheOnly = build(
+        config: QueryConfig(shouldFetch: (_, __, ___) => false),
+      );
+      final cacheOnlySub = cacheOnly.stream.listen((_) {});
+      await Future<void>.delayed(Duration.zero);
+      expect(numCalls, 0);
+
+      await build().refetch();
+
+      expect(numCalls, 1);
+      await cacheOnlySub.cancel();
+    });
   });
   group("Previous page", () {
     test("Can get previous page", () async {
