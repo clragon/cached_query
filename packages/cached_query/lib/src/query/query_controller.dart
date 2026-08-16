@@ -199,11 +199,11 @@ final class QueryController<T> {
     }
   }
 
-  Future<void> _createResult({
-    required bool ignoreStale,
-    required FetchOptions options,
-  }) async {
-    final shouldFetch = _listeners.every(
+  bool _anyListenerShouldFetch() {
+    if (_listeners.isEmpty) {
+      return true;
+    }
+    return _listeners.any(
       (q) {
         final config = q.config as QueryConfig<T>;
         return config.shouldFetch(
@@ -213,6 +213,13 @@ final class QueryController<T> {
         );
       },
     );
+  }
+
+  Future<void> _createResult({
+    required bool ignoreStale,
+    required FetchOptions options,
+  }) async {
+    final shouldFetch = _anyListenerShouldFetch();
     if (!shouldFetch) {
       return;
     }
@@ -241,16 +248,7 @@ final class QueryController<T> {
       }
     }
 
-    final shouldContinue = _listeners.every(
-      (q) {
-        final config = q.config as QueryConfig<T>;
-        return config.shouldFetch(
-          key,
-          stateNotifier.value.data.valueOrNull,
-          stateNotifier.value.timeCreated,
-        );
-      },
-    );
+    final shouldContinue = _anyListenerShouldFetch();
 
     // Data from storage may be considered fresh, so we need to check if the query is stale.
     final stale = _isStale();
