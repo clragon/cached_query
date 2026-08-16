@@ -624,6 +624,43 @@ void main() {
 
       expect(numCalls, 2);
     });
+
+    test("configs differing in shouldFetch are not equal", () {
+      expect(
+        QueryConfig<String>(shouldFetch: (_, __, ___) => false),
+        isNot(QueryConfig<String>()),
+      );
+    });
+
+    test("a query keeps its own shouldFetch", () async {
+      final cache = CachedQuery.asNewInstance();
+      int numCalls = 0;
+      Query<String> build({QueryConfig<String>? config}) => Query<String>(
+            key: "should_refetch_per_query",
+            cache: cache,
+            queryFn: () {
+              numCalls++;
+              return Future.value("");
+            },
+            config: config,
+          );
+
+      final cacheOnly = build(
+        config: QueryConfig(
+          shouldFetch: (_, __, ___) => false,
+          staleDuration: Duration.zero,
+        ),
+      );
+      final fetching = build(config: QueryConfig(staleDuration: Duration.zero));
+
+      expect(fetching, isNot(same(cacheOnly)));
+
+      await cacheOnly.fetch();
+      expect(numCalls, 0);
+
+      await fetching.fetch();
+      expect(numCalls, 1);
+    });
   });
   group("Caching Query", () {
     tearDownAll(cachedQuery.deleteCache);
