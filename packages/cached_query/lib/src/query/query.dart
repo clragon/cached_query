@@ -206,7 +206,11 @@ final class Query<T> extends Cacheable<QueryStatus<T>> {
 
   @override
   Future<QueryStatus<T>> refetch() async {
+    _controller.registerQuery(this);
     await _controller.invalidate(refetchInactive: true);
+    if (!hasListener) {
+      _controller.removeRegisteredQuery(this);
+    }
     return state;
   }
 

@@ -251,11 +251,15 @@ final class InfiniteQuery<T, Arg>
 
   @override
   Future<InfiniteQueryStatus<T, Arg>> refetch() async {
+    _controller.registerQuery(this);
     await invalidate(
       refetchInactive: true,
       // ignore: avoid_redundant_argument_values
       refetchActive: true,
     );
+    if (!hasListener) {
+      _controller.removeRegisteredQuery(this);
+    }
     return _state;
   }
 

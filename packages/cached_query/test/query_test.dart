@@ -694,6 +694,32 @@ void main() {
       await cacheOnlySub.cancel();
       await fetchingSub.cancel();
     });
+
+    test("refetch counts the caller against a cache only listener", () async {
+      final cache = CachedQuery.asNewInstance();
+      int numCalls = 0;
+      Query<String> build({QueryConfig<String>? config}) => Query<String>(
+            key: "should_refetch_unsubscribed",
+            cache: cache,
+            queryFn: () {
+              numCalls++;
+              return Future.value("");
+            },
+            config: config,
+          );
+
+      final cacheOnly = build(
+        config: QueryConfig(shouldFetch: (_, __, ___) => false),
+      );
+      final cacheOnlySub = cacheOnly.stream.listen((_) {});
+      await Future<void>.delayed(Duration.zero);
+      expect(numCalls, 0);
+
+      await build().refetch();
+
+      expect(numCalls, 1);
+      await cacheOnlySub.cancel();
+    });
   });
   group("Caching Query", () {
     tearDownAll(cachedQuery.deleteCache);
