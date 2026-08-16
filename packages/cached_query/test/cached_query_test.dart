@@ -392,6 +392,19 @@ void main() {
       final query = cache.getQuery<Query<String>>("set_query");
       expect(query?.state.data, "new_value");
     });
+    test("Set query updates an existing query", () {
+      final cache = CachedQuery.asNewInstance()
+        ..setQueryData<String>(
+          key: "set_query",
+          data: "new_value",
+        )
+        ..setQueryData<String>(
+          key: "set_query",
+          data: "second_value",
+        );
+      final query = cache.getQuery<Query<String>>("set_query");
+      expect(query?.state.data, "second_value");
+    });
     test("Calling fetch on a empty query fails", () async {
       final cache = CachedQuery.asNewInstance()
         ..setQueryData<String>(
@@ -460,6 +473,25 @@ void main() {
       final data = (res as InfiniteQuerySuccess).data;
       expect(data.pages.length, 2);
       expect(data, query?.state.data);
+    });
+
+    test("Set query updates an existing infinite query", () async {
+      final key = "set_i_query_update";
+      final cache = CachedQuery.asNewInstance();
+      final infiniteQuery = InfiniteQuery<String, int>(
+        key: key,
+        getNextArg: (data) => 1,
+        queryFn: (page) async => "",
+        cache: cache,
+      );
+      cache.setQueryData<InfiniteQueryData<String, int>>(
+        key: key,
+        data: InfiniteQueryData<String, int>(
+          pages: ["new_value"],
+          args: [1],
+        ),
+      );
+      expect(infiniteQuery.state.data?.pages.first, "new_value");
     });
 
     test("Getting infinite query fails", () async {

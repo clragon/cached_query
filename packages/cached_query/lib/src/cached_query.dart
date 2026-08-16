@@ -164,7 +164,7 @@ class CachedQuery {
     required Object key,
     required T data,
   }) {
-    final query = getQuery<Cacheable<T>>(key);
+    final query = getQuery<Cacheable<Object?>>(key);
     switch (query) {
       case InfiniteQuery(:final setData):
         assert(
