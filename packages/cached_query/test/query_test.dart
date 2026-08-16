@@ -661,6 +661,39 @@ void main() {
       await fetching.fetch();
       expect(numCalls, 1);
     });
+
+    test("a listening cache only query does not block a fetch", () async {
+      final cache = CachedQuery.asNewInstance();
+      int numCalls = 0;
+      Query<String> build({QueryConfig<String>? config}) => Query<String>(
+            key: "should_refetch_no_veto",
+            cache: cache,
+            queryFn: () {
+              numCalls++;
+              return Future.value("");
+            },
+            config: config,
+          );
+
+      final cacheOnly = build(
+        config: QueryConfig(
+          shouldFetch: (_, __, ___) => false,
+          staleDuration: Duration.zero,
+        ),
+      );
+      final fetching = build(config: QueryConfig(staleDuration: Duration.zero));
+
+      final cacheOnlySub = cacheOnly.stream.listen((_) {});
+      await Future<void>.delayed(Duration.zero);
+      expect(numCalls, 0);
+
+      final fetchingSub = fetching.stream.listen((_) {});
+      await Future<void>.delayed(Duration.zero);
+      expect(numCalls, 1);
+
+      await cacheOnlySub.cancel();
+      await fetchingSub.cancel();
+    });
   });
   group("Caching Query", () {
     tearDownAll(cachedQuery.deleteCache);
