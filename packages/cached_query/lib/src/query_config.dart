@@ -325,6 +325,7 @@ class QueryConfig<Data> implements ControllerOptions<Data> {
           shouldRethrow == other.shouldRethrow &&
           storageDeserializer == other.storageDeserializer &&
           storageSerializer == other.storageSerializer &&
+          _shouldFetch == other._shouldFetch &&
           ignoreCacheDuration == other.ignoreCacheDuration &&
           refetchOnResume == other.refetchOnResume &&
           pollingInterval == other.pollingInterval &&
@@ -339,6 +340,7 @@ class QueryConfig<Data> implements ControllerOptions<Data> {
       cacheDuration.hashCode ^
       shouldRethrow.hashCode ^
       storageDeserializer.hashCode ^
+      _shouldFetch.hashCode ^
       ignoreCacheDuration.hashCode ^
       refetchOnResume.hashCode ^
       pollingInterval.hashCode ^
