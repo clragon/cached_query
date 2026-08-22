@@ -219,18 +219,8 @@ final class QueryController<T> {
     required bool ignoreStale,
     required FetchOptions options,
   }) async {
-    final shouldFetch = _anyListenerShouldFetch();
-    if (!shouldFetch) {
-      return;
-    }
-    stateNotifier.add(
-      Fetch(
-        fetchOptions: options,
-        isInitialFetch: stateNotifier.value.data.isNone,
-      ),
-    );
-    final getFromStorage =
-        stateNotifier.value.data.isNone && _config.storeQuery;
+    final isInitialFetch = stateNotifier.value.data.isNone;
+    final getFromStorage = isInitialFetch && _config.storeQuery;
     if (getFromStorage) {
       try {
         final storedData = await _fetchFromStorage();
@@ -248,13 +238,18 @@ final class QueryController<T> {
       }
     }
 
-    final shouldContinue = _anyListenerShouldFetch();
+    if (!_anyListenerShouldFetch()) {
+      return;
+    }
+
+    stateNotifier.add(
+      Fetch(fetchOptions: options, isInitialFetch: isInitialFetch),
+    );
 
     // Data from storage may be considered fresh, so we need to check if the query is stale.
     final stale = _isStale();
 
-    if ((stale || ignoreStale) && shouldContinue) {
-      final isInitialFetch = stateNotifier.value.data.isNone;
+    if (stale || ignoreStale) {
       int attempt = 0;
       while (true) {
         if (_disposed) break;
