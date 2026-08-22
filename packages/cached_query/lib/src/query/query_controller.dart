@@ -143,7 +143,11 @@ final class QueryController<T> {
 
   void updateConfig({ControllerOptions<T>? config, FetchFunction<T>? fetchFn}) {
     if (config != null) {
+      final wasStoring = _config.storeQuery;
       _config = config;
+      if (!wasStoring && config.storeQuery) {
+        _saveToStorage();
+      }
     }
     if (fetchFn != null) {
       onFetch = fetchFn;

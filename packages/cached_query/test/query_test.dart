@@ -280,6 +280,25 @@ void main() {
       storage = null;
       cache = null;
     });
+    test("Should store data set before the query was storable", () async {
+      const key = "adopted";
+      const data = "someData";
+
+      final bare = CachedQuery.asNewInstance()..config(storage: storage);
+
+      bare.setQueryData<String>(key: key, data: data);
+      expect(storage!.queries[key], isNull);
+
+      Query<String>(
+        key: key,
+        cache: bare,
+        config: const QueryConfig(storeQuery: true),
+        queryFn: () async => data,
+      );
+
+      expect(storage!.queries[key]?.data, data);
+    });
+
     test("Should store the query on fetch", () async {
       const key = "store";
       const data = "someData";
